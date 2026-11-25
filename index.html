@@ -616,7 +616,7 @@ document.fonts.ready.then(() => {
   if (reduce) {
     state.alpha = 0.95;
   } else {
-    const split = SplitText.create(".hero-title", { type: "lines,words", mask: "lines" });
+    const split = SplitText.create(".hero-title", { type: "words", mask: "words" });
     gsap.timeline()
       .to(state, { alpha: 0.95, duration: 2.6, ease: "power2.out" }, 0)
       .from(split.words, { yPercent: 110, duration: 1.3, ease: "expo.out", stagger: 0.06 }, 0.3)
