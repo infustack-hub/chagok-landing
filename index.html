@@ -47,8 +47,12 @@
   .top {
     position: fixed; top: 0; left: 0; right: 0; z-index: 5;
     display: flex; justify-content: space-between; align-items: center;
-    padding: 28px clamp(16px, 4vw, 56px);
+    height: var(--header-h); padding: 0 clamp(16px, 4vw, 56px);
+    /* solid band so scrolling content is cut off under the header instead of colliding with the logo */
+    background: var(--bg);
   }
+  :root { --header-h: 88px; }
+  .stage { padding-top: var(--header-h); }
   .logo { width: 84px; height: auto; color: var(--ink); }
   .top a.news {
     font-size: 14px; text-decoration: none; padding: 8px 16px;
@@ -173,9 +177,17 @@
     .steps li.on { display: block; }
     .phone { width: 232px; height: 480px; border-radius: 38px; padding: 8px; }
     .screen { border-radius: 30px; }
-    .stack .stage { grid-template-columns: 1fr; align-content: center; padding-top: 60px; }
-    .pile { height: 420px; }
-    .piece { margin-top: -170px; }
+    :root { --header-h: 64px; }
+    .logo { width: 64px; }
+    .top a.news { padding: 6px 14px; font-size: 13px; }
+    .feed .stage { padding-top: calc(var(--header-h) + 12px); gap: 18px; }
+    .phone { height: min(480px, calc(100svh - var(--header-h) - 170px)); width: auto; aspect-ratio: 232 / 480; }
+    .stack .stage { grid-template-columns: 1fr; align-content: start; padding-top: calc(var(--header-h) + 16px); gap: 12px; }
+    .stack h2 { font-size: 34px; }
+    .stack p { margin-top: 10px; }
+    /* pile fills what is left under the text; card size follows the viewport height so short in-app browsers fit */
+    .pile { height: calc(100svh - var(--header-h) - 190px); }
+    .piece { --pw: min(58vw, 34svh); width: var(--pw); margin-left: calc(var(--pw) / -2); margin-top: calc((var(--pw) + 64px) / -2); }
   }
   @media (prefers-reduced-motion: reduce) {
     .scroll-cue i { animation: none; }
