@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>차곡 | 어디선가 본 찻잔을, 차곡에서 바로</title>
+<meta name="description" content="차곡은 차와 다구를 짧은 영상으로 보고, 마음에 든 작품을 작가에게 바로 사는 앱이에요.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@300;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root {
+    --leaf: #16301F;
+    --leaf-deep: #0F2317;
+    --steep: #2F5B3B;
+    --matcha: #A8BD7A;
+    --porcelain: #EEF0E8;
+    --liquor: #C8A659;
+    /* tweened by ScrollTrigger when the page turns to porcelain */
+    --bg: #16301F;
+    --ink: #EEF0E8;
+    --ink-soft: rgba(238, 240, 232, 0.68);
+    --display: "Hahmlet", serif;
+    --body: "Pretendard Variable", Pretendard, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.65;
+    word-break: keep-all;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--matcha); outline-offset: 4px; border-radius: 4px; }
+
+  #leaves { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  main, .top, footer { position: relative; z-index: 1; }
+
+  /* header */
+  .top {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 28px clamp(16px, 4vw, 56px);
+  }
+  .logo { width: 84px; height: auto; color: var(--ink); }
+  .top a.news {
+    font-size: 14px; text-decoration: none; padding: 8px 16px;
+    border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent); border-radius: 999px;
+    transition: background .3s, color .3s;
+  }
+  .top a.news:hover { background: var(--ink); color: var(--bg); }
+
+  /* hero */
+  .hero {
+    min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 0 clamp(16px, 4vw, 56px) clamp(56px, 10vh, 120px);
+  }
+  .hero h1 {
+    font-family: var(--display); font-weight: 500;
+    font-size: clamp(40px, 7.4vw, 112px); line-height: 1.12; letter-spacing: -0.035em;
+    max-width: 11em;
+  }
+  .hero p { margin-top: 28px; max-width: 34ch; color: var(--ink-soft); font-size: clamp(16px, 1.4vw, 19px); }
+  .scroll-cue { margin-top: 56px; display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--ink-soft); }
+  .scroll-cue i { display: block; width: 64px; height: 1px; background: currentColor; transform-origin: left; animation: cue 2.4s ease-in-out infinite; }
+  @keyframes cue { 0% { transform: scaleX(0); } 50% { transform: scaleX(1); transform-origin: left; } 51% { transform-origin: right; } 100% { transform: scaleX(0); transform-origin: right; } }
+
+  /* steep: the cup is drawn in WebGL, this layer only carries words */
+  .steep { height: 320vh; }
+  .stage { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+  .steep .words {
+    position: absolute; left: clamp(16px, 4vw, 56px); right: clamp(16px, 4vw, 56px); bottom: clamp(48px, 9vh, 96px);
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap;
+  }
+  .steep h2 {
+    font-family: var(--display); font-weight: 300;
+    font-size: clamp(36px, 5.6vw, 84px); line-height: 1.1; letter-spacing: -0.03em;
+  }
+  .steep p { max-width: 30ch; color: var(--ink-soft); }
+  .steep h2, .steep p { opacity: 0; }
+
+  /* feed / phone */
+  .feed { height: 420vh; }
+  .feed .stage {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+    gap: clamp(24px, 6vw, 120px); padding: 0 clamp(16px, 8vw, 140px);
+  }
+  .steps { list-style: none; display: grid; gap: 36px; max-width: 440px; }
+  .steps li { opacity: .28; transition: opacity .6s ease; }
+  .steps li.on { opacity: 1; }
+  .steps strong {
+    display: block; font-family: var(--display); font-weight: 500;
+    font-size: clamp(26px, 3vw, 42px); line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 8px;
+  }
+  .steps span { color: var(--ink-soft); }
+  .phone {
+    width: 300px; height: 620px; border-radius: 48px; padding: 10px;
+    background: #0B1A10; box-shadow: 0 40px 90px -30px rgba(0,0,0,.55), inset 0 0 0 1.5px rgba(238,240,232,.12);
+  }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 38px; overflow: hidden; background: #000; }
+  .track { height: 300%; }
+  .slide { position: relative; height: 33.3334%; }
+  .slide img { width: 100%; height: 100%; object-fit: cover; }
+  .slide::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.25) 0, transparent 22%, transparent 55%, rgba(0,0,0,.6) 100%); }
+  .meta { position: absolute; left: 16px; right: 16px; bottom: 22px; z-index: 1; color: #fff; font-size: 13px; }
+  .kiln { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 10px; }
+  .kiln img { width: 26px; height: 26px; border-radius: 50%; }
+  .card {
+    display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 12px;
+    background: rgba(255,255,255,.94); color: #222;
+  }
+  .card img { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; }
+  .card b { display: block; font-size: 13px; }
+  .card small { font-size: 12px; color: #666; }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; transform: translateY(105%);
+    background: #fff; color: #1d1d1d; border-radius: 22px 22px 0 0; padding: 14px 18px 26px;
+  }
+  .sheet .grab { width: 36px; height: 4px; border-radius: 2px; background: #ddd; margin: 0 auto 14px; }
+  .sheet .row { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; }
+  .sheet button {
+    width: 100%; margin-top: 12px; padding: 13px; border: 0; border-radius: 10px;
+    background: var(--leaf); color: var(--porcelain); font: 600 15px var(--body);
+  }
+
+  /* stack */
+  .stack { height: 340vh; }
+  .stack .stage {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center;
+    padding: 0 clamp(16px, 8vw, 140px); gap: 40px;
+  }
+  .stack h2 {
+    font-family: var(--display); font-weight: 500;
+    font-size: clamp(36px, 5vw, 76px); line-height: 1.12; letter-spacing: -0.035em; max-width: 10ch;
+  }
+  .stack p { margin-top: 24px; max-width: 32ch; color: var(--ink-soft); }
+  .pile { position: relative; height: min(70vh, 520px); }
+  .piece {
+    position: absolute; left: 50%; top: 50%; width: min(64vw, 280px); margin-left: calc(min(64vw, 280px) / -2); margin-top: -190px;
+    background: #fff; color: #1d1d1d; border-radius: 6px; padding: 12px 12px 16px;
+    box-shadow: 0 18px 40px -18px rgba(22,48,31,.45);
+  }
+  .piece img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 3px; background: #f2f2ee; }
+  .piece b { display: block; margin-top: 12px; font-size: 15px; }
+  .piece small { color: #777; font-size: 13px; }
+
+  /* app / cta */
+  .app {
+    min-height: 90svh; display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+    padding: 0 clamp(16px, 8vw, 140px);
+  }
+  .app h2 { font-family: var(--display); font-weight: 500; font-size: clamp(40px, 6.4vw, 96px); line-height: 1.1; letter-spacing: -0.035em; }
+  .app p { margin-top: 20px; color: var(--ink-soft); max-width: 36ch; }
+  footer {
+    background: var(--leaf-deep); color: var(--porcelain);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+    padding: 40px clamp(16px, 4vw, 56px); font-size: 13px;
+  }
+  footer .logo { color: var(--porcelain); width: 64px; }
+  footer span { color: rgba(238,240,232,.6); }
+
+  @media (max-width: 760px) {
+    .feed .stage { grid-template-columns: 1fr; align-content: center; justify-items: center; gap: 28px; padding-top: 80px; }
+    .steps { gap: 10px; }
+    .steps li { display: none; text-align: center; }
+    .steps li.on { display: block; }
+    .phone { width: 232px; height: 480px; border-radius: 38px; padding: 8px; }
+    .screen { border-radius: 30px; }
+    .stack .stage { grid-template-columns: 1fr; align-content: center; padding-top: 60px; }
+    .pile { height: 420px; }
+    .piece { margin-top: -170px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-cue i { animation: none; }
+    .steps li { transition: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="leaves" aria-hidden="true"></canvas>
+
+<header class="top">
+  <a href="#" aria-label="차곡 홈">
+    <svg class="logo" viewBox="0 0 113 37" role="img" aria-label="차곡"><path fill="currentColor" d="M44.352 36.8642V0.576191H50.752V1.85619H57.472V7.93619H50.752V36.8642H44.352ZM-2.92063e-05 30.5922C9.79197 26.5602 14.528 19.2642 16.256 12.9282V9.79219H1.79197V3.64819H16.256V0.000190735H22.656V3.64819H37.184V9.79219H22.656V12.8642C24.32 18.6242 29.12 25.2802 38.912 29.3122L36.608 34.8162C28.224 31.4242 22.784 25.9202 19.584 20.5442C16.512 26.4962 10.944 32.5762 2.30397 36.0962L-2.92063e-05 30.5922ZM60.655 23.1042V16.9602H83.567V11.6482H89.967V16.9602H112.879V23.1042H60.655ZM61.295 31.4242V25.2802H112.367V36.8642H105.967V31.4242H61.295ZM61.935 6.72019V0.576191H111.023V14.7202H104.623V6.72019H61.935Z"/></svg>
+  </a>
+  <a class="news" href="#app">출시 소식</a>
+</header>
+
+<main>
+  <section class="hero">
+    <h1 class="hero-title">어디선가 본 찻잔을,<br>차곡에서 바로.</h1>
+    <p class="hero-sub">차곡은 차와 다구를 짧은 영상으로 보고, 마음에 든 작품을 작가에게 바로 사는 앱이에요.</p>
+    <div class="scroll-cue hero-sub"><i></i>내려서 찻잎을 우려 보세요</div>
+  </section>
+
+  <section class="steep" id="steep">
+    <div class="stage">
+      <div class="words">
+        <h2>담그고,<br>잠깐 쉬어가요.</h2>
+        <p>찻잎이 다 풀리기까지 3분. 그동안 차곡에서 오늘 마실 차와 어울리는 잔을 찾아보세요.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="feed" id="feed">
+    <div class="stage">
+      <ol class="steps">
+        <li class="on"><strong>넘겨 봐요</strong><span>차 우리는 장면과 작가의 작업을 세로 영상으로 넘겨 봐요.</span></li>
+        <li><strong>눌러 봐요</strong><span>영상에 나온 작품 카드를 누르면 상세 정보로 바로 이어져요.</span></li>
+        <li><strong>들여요</strong><span>작가에게 바로 주문하고, 배송도 앱에서 따라가요.</span></li>
+      </ol>
+      <div class="phone" aria-hidden="true">
+        <div class="screen">
+          <div class="track">
+            <div class="slide">
+              <img src="assets/post-image.jpg" alt="">
+              <div class="meta">
+                <div class="kiln"><img src="assets/avatar-sample.jpg" alt="">장작 가마</div>
+                <div class="card"><img src="assets/product-thumb.jpg" alt=""><div><b>분청 사발</b><small>장작 가마</small></div></div>
+              </div>
+            </div>
+            <div class="slide">
+              <img src="assets/hero.jpg" alt="">
+              <div class="meta">
+                <div class="kiln"><img src="assets/avatar-sample.jpg" alt="">경기 가마</div>
+                <div class="card"><img src="assets/hero.jpg" alt=""><div><b>청화 다관</b><small>경기 가마</small></div></div>
+              </div>
+            </div>
+            <div class="slide">
+              <img src="assets/editorial-2.jpg" alt="">
+              <div class="meta">
+                <div class="kiln"><img src="assets/avatar-sample.jpg" alt="">경기 가마</div>
+                <div class="card"><img src="assets/editorial-2.jpg" alt=""><div><b>백자 찻잔</b><small>경기 가마</small></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <div class="row"><span>청화 다관</span><span>1개</span></div>
+            <div class="row"><span>배송</span><span>작가가 직접 보내요</span></div>
+            <button type="button" tabindex="-1">장바구니에 담기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stack" id="stack">
+    <div class="stage">
+      <div>
+        <h2>마음에 든 작품을 차곡차곡.</h2>
+        <p>좋아요한 다구, 팔로우한 가마, 주문한 작품이 한곳에 쌓여요.</p>
+      </div>
+      <div class="pile" aria-hidden="true">
+        <div class="piece"><img src="assets/ranking-product.png" alt=""><b>청자 다완</b><br><small>남의 가마</small></div>
+        <div class="piece"><img src="assets/new-product.jpg" alt=""><b>백자 찻잔</b><br><small>경기 가마</small></div>
+        <div class="piece"><img src="assets/editorial-1.jpg" alt=""><b>분청 사발</b><br><small>장작 가마</small></div>
+        <div class="piece"><img src="assets/editorial-3.jpg" alt=""><b>청자 다관</b><br><small>중인 가마</small></div>
+        <div class="piece"><img src="assets/product-thumb.jpg" alt=""><b>숙우</b><br><small>장작 가마</small></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="app" id="app">
+    <h2>곧 App Store에서<br>만나요.</h2>
+    <p>지금은 테스트 버전으로 작가님들과 함께 다듬고 있어요. 출시되면 이 페이지에서 가장 먼저 알려드릴게요.</p>
+  </section>
+</main>
+
+<footer>
+  <svg class="logo" viewBox="0 0 113 37" role="img" aria-label="차곡"><path fill="currentColor" d="M44.352 36.8642V0.576191H50.752V1.85619H57.472V7.93619H50.752V36.8642H44.352ZM-2.92063e-05 30.5922C9.79197 26.5602 14.528 19.2642 16.256 12.9282V9.79219H1.79197V3.64819H16.256V0.000190735H22.656V3.64819H37.184V9.79219H22.656V12.8642C24.32 18.6242 29.12 25.2802 38.912 29.3122L36.608 34.8162C28.224 31.4242 22.784 25.9202 19.584 20.5442C16.512 26.4962 10.944 32.5762 2.30397 36.0962L-2.92063e-05 30.5922ZM60.655 23.1042V16.9602H83.567V11.6482H89.967V16.9602H112.879V23.1042H60.655ZM61.295 31.4242V25.2802H112.367V36.8642H105.967V31.4242H61.295ZM61.935 6.72019V0.576191H111.023V14.7202H104.623V6.72019H61.935Z"/></svg>
+  <!-- TODO before launch: 사업자 정보(상호·대표·사업자번호·통신판매업 신고번호·주소·연락처) -->
+  <span>© 2026 차곡 · dip-rest.com</span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+gsap.registerPlugin(ScrollTrigger, SplitText);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const small = innerWidth < 760;
+
+// Shared scene state; GSAP tweens these, the render loop reads them.
+// alpha: entrance fade (time-based); dim/light: scroll-scrubbed, kept separate so scrubs never record a mid-entrance alpha.
+const state = { alpha: 0, dim: 1, g: 0, light: 0 };
+
+/* ---------- three.js: leaves, porcelain cup, tea ---------- */
+const canvas = document.getElementById("leaves");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.5 : 2));
+renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = !small;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.75;
+const darkBg = new THREE.Color("#16301F"), lightBg = new THREE.Color("#EEF0E8");
+scene.fog = new THREE.Fog(darkBg.clone(), 12, 28);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 60);
+camera.position.z = 11;
+
+scene.add(new THREE.HemisphereLight(0xeef3e4, 0x0c1a10, 0.5));
+const sun = new THREE.DirectionalLight(0xfff0d8, 2.6);
+sun.position.set(2.5, 6, 5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.camera.left = sun.shadow.camera.bottom = -3;
+sun.shadow.camera.right = sun.shadow.camera.top = 3;
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 16;
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02; sun.shadow.radius = 4;
+scene.add(sun);
+const backLight = new THREE.DirectionalLight(0xcfe3d0, 1.1);
+backLight.position.set(-3, 3, -6);
+scene.add(backLight);
+
+const tex = (w, h, draw, srgb = true) => {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  draw(c.getContext("2d"), w, h);
+  const t = new THREE.CanvasTexture(c);
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+};
+const rnd = (a, b) => a + Math.random() * (b - a);
+
+// Leaf texture: lighter blade toward the midrib, a pale midrib, paired lateral veins, mottling.
+const leafMap = tex(256, 512, (x, w, h) => {
+  const g = x.createLinearGradient(0, 0, w, 0);
+  g.addColorStop(0, "#7d8f67"); g.addColorStop(0.5, "#c2cfa6"); g.addColorStop(1, "#7d8f67");
+  x.fillStyle = g; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 900; i++) {
+    x.fillStyle = `rgba(${Math.random() < 0.5 ? "40,60,30" : "230,235,200"},${rnd(0.02, 0.07)})`;
+    x.beginPath(); x.arc(rnd(0, w), rnd(0, h), rnd(2, 14), 0, 7); x.fill();
+  }
+  x.strokeStyle = "rgba(235,240,210,0.75)"; x.lineWidth = 5;
+  x.beginPath(); x.moveTo(w / 2, h); x.lineTo(w / 2, 0); x.stroke();
+  x.lineWidth = 2; x.strokeStyle = "rgba(225,232,200,0.45)";
+  for (let y = h * 0.92; y > h * 0.06; y -= 34) {
+    for (const s of [-1, 1]) {
+      x.beginPath(); x.moveTo(w / 2, y);
+      x.quadraticCurveTo(w / 2 + s * w * 0.22, y - 30, w / 2 + s * w * 0.46, y - 70); x.stroke();
+    }
+  }
+});
+
+// Leaf: a segmented plane pinched into a leaf outline, then cupped and waved so it catches light.
+function leafGeometry() {
+  const g = new THREE.PlaneGeometry(1, 1, 8, 16);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const u = p.getX(i), v = p.getY(i);            // u, v in [-0.5, 0.5]
+    const t = v + 0.5;                              // 0 at stem, 1 at tip
+    const width = 0.34 * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.85)), 0.9);
+    const x = u * 2 * width;
+    p.setXYZ(i, x, v, x * x * 2.0 + 0.06 * Math.sin(t * 5.5) - 0.04 * Math.abs(u));
+  }
+  g.computeVertexNormals();
+  // Morph target: the same leaf unfurled and lying flat, as it does once steeped.
+  const flat = p.clone(), fn = g.attributes.normal.clone();
+  for (let i = 0; i < flat.count; i++) {
+    const x = flat.getX(i) * 1.05, v = flat.getY(i);
+    flat.setXYZ(i, x, v, 0.015 * Math.sin((v + 0.5) * 7 + x * 9));
+    fn.setXYZ(i, 0, 0, 1);
+  }
+  g.morphAttributes.position = [flat];
+  g.morphAttributes.normal = [fn];
+  return g;
+}
+
+const COUNT = small ? 80 : 140;
+const leafMat = new THREE.MeshPhysicalMaterial({
+  map: leafMap, side: THREE.DoubleSide, roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.5,
+  sheen: 0.4, sheenColor: new THREE.Color("#dfe8c4"), sheenRoughness: 0.6,
+});
+const leaves = new THREE.InstancedMesh(leafGeometry(), leafMat, COUNT);
+leaves.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+leaves.castShadow = true;
+leaves.frustumCulled = false;
+scene.add(leaves);
+
+const palette = ["#5E8A47", "#4A7339", "#7A9B52", "#3D6230", "#93AE62", "#6A8C3F"].map(c => new THREE.Color(c));
+const oxidized = new THREE.Color("#A8915A");
+const data = [];
+for (let i = 0; i < COUNT; i++) {
+  data.push({
+    x: rnd(-1, 1), y: rnd(-1, 1), z: rnd(-9, 2.5),
+    rx: rnd(0, 6.28), ry: rnd(0, 6.28), rz: rnd(0, 6.28),
+    sx: rnd(-0.5, 0.5), sy: rnd(-0.4, 0.4), sz: rnd(-0.3, 0.3),
+    fall: rnd(0.6, 1.4), ph: rnd(0, 6.28), s: rnd(0.55, 1.2),
+    r: Math.sqrt(Math.random()), dy: Math.random() < 0.3 ? rnd(0.0, 0.012) : rnd(-0.16, -0.02),
+    tilt: rnd(-0.35, 0.35), delay: Math.random(), cupped: i % 4 === 0,
+  });
+  data[i].color = (Math.random() < 0.08 ? oxidized : palette[i % palette.length]).clone();
+  leaves.setColorAt(i, data[i].color);
+}
+const wetLeaf = new THREE.Color("#3F5A26"), tmpColor = new THREE.Color();
+const morpher = new THREE.Mesh(leaves.geometry);
+morpher.morphTargetInfluences = [0];
+for (let i = 0; i < COUNT; i++) leaves.setMorphAt(i, morpher);
+
+/* Porcelain tea bowl (백자 찻사발), lathed from an outer and inner profile in unit size (rim radius 1). */
+const LEVEL = 0.02;                                 // tea surface height
+const outerPts = [[0, -0.55], [0.33, -0.55], [0.35, -0.6], [0.43, -0.62], [0.46, -0.5],
+  [0.64, -0.36], [0.83, -0.15], [0.95, 0.06], [1.0, 0.22]];
+const innerPts = [[0.965, 0.235], [0.915, 0.06], [0.79, -0.14], [0.6, -0.31], [0.36, -0.43], [0.0, -0.465]];
+const spline = pts => new THREE.SplineCurve(pts.map(([r, y]) => new THREE.Vector2(r, y))).getPoints(60);
+const outer = spline(outerPts), inner = spline(innerPts);
+const lip = [new THREE.Vector2(1.004, 0.232), new THREE.Vector2(0.985, 0.243)];
+const bowlGeo = new THREE.LatheGeometry([...outer, ...lip, ...inner], 160);
+bowlGeo.computeVertexNormals();
+const innerR = (() => {                             // inner wall radius at the tea surface
+  for (let i = 1; i < inner.length; i++) {
+    const a = inner[i - 1], b = inner[i];
+    if ((a.y - LEVEL) * (b.y - LEVEL) <= 0) return a.x + (b.x - a.x) * (LEVEL - a.y) / (b.y - a.y);
+  }
+  return 0.9;
+})();
+
+const glazeRough = tex(512, 512, (x, w, h) => {
+  x.fillStyle = "#555"; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 1400; i++) {
+    x.fillStyle = `rgba(${Math.random() < 0.5 ? "0,0,0" : "255,255,255"},${rnd(0.03, 0.09)})`;
+    x.beginPath(); x.ellipse(rnd(0, w), rnd(0, h), rnd(4, 40), rnd(2, 12), rnd(0, 3), 0, 7); x.fill();
+  }
+}, false);
+glazeRough.wrapS = glazeRough.wrapT = THREE.RepeatWrapping;
+glazeRough.repeat.set(3, 1);
+const porcelain = new THREE.MeshPhysicalMaterial({
+  color: "#F3F1EA", roughness: 0.55, roughnessMap: glazeRough, clearcoat: 1, clearcoatRoughness: 0.08,
+  sheen: 0.25, sheenColor: new THREE.Color("#e9efe6"), side: THREE.DoubleSide,
+});
+const bowl = new THREE.Mesh(bowlGeo, porcelain);
+bowl.castShadow = bowl.receiveShadow = true;
+
+// Ripple normal map for the tea surface.
+const rippleNormal = tex(256, 256, (x, w, h) => {
+  const img = x.createImageData(w, h), H = (u, v) =>
+    Math.sin(u * 0.19 + Math.sin(v * 0.07) * 2) * 0.5 + Math.sin(Math.hypot(u - 128, v - 128) * 0.21) * 0.7 + Math.sin(v * 0.13 - u * 0.05) * 0.4;
+  for (let v = 0; v < h; v++) for (let u = 0; u < w; u++) {
+    const dx = H(u + 1, v) - H(u - 1, v), dy = H(u, v + 1) - H(u, v - 1);
+    const n = new THREE.Vector3(-dx, -dy, 2).normalize(), k = (v * w + u) * 4;
+    img.data[k] = (n.x * 0.5 + 0.5) * 255; img.data[k + 1] = (n.y * 0.5 + 0.5) * 255; img.data[k + 2] = (n.z * 0.5 + 0.5) * 255; img.data[k + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+}, false);
+rippleNormal.wrapS = rippleNormal.wrapT = THREE.RepeatWrapping;
+rippleNormal.center.set(0.5, 0.5);
+
+const thicknessMap = tex(256, 256, (x, w) => {
+  const g = x.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
+  g.addColorStop(0, "#fff"); g.addColorStop(0.7, "#9a9a9a"); g.addColorStop(1, "#303030");
+  x.fillStyle = g; x.fillRect(0, 0, w, w);
+}, false);
+const clearTea = new THREE.Color("#E9F0DA"), steepedTea = new THREE.Color("#B9B444");
+const teaMat = new THREE.MeshPhysicalMaterial({
+  color: "#ffffff", transmission: 1, roughness: 0.03, ior: 1.333, thickness: 0.6, thicknessMap,
+  attenuationColor: clearTea.clone(), attenuationDistance: 4,
+  normalMap: rippleNormal, normalScale: new THREE.Vector2(0.12, 0.12), specularIntensity: 1,
+});
+const tea = new THREE.Mesh(new THREE.CircleGeometry(innerR + 0.005, 128), teaMat);
+tea.rotation.x = -Math.PI / 2;
+tea.position.y = LEVEL;
+
+// Soft shadow the bowl casts on the "table" plane we never draw.
+const shadowTex = tex(256, 256, (x, w) => {
+  const g = x.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
+  g.addColorStop(0, "rgba(0,0,0,0.55)"); g.addColorStop(0.55, "rgba(0,0,0,0.25)"); g.addColorStop(1, "rgba(0,0,0,0)");
+  x.fillStyle = g; x.fillRect(0, 0, w, w);
+});
+const contact = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6),
+  new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, opacity: 0.8 }));
+contact.rotation.x = -Math.PI / 2;
+contact.position.y = -0.63;
+
+// Steam: a few soft sprites drifting up from the surface.
+const steamTex = tex(128, 128, (x, w) => {
+  const g = x.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
+  g.addColorStop(0, "rgba(255,255,255,0.9)"); g.addColorStop(1, "rgba(255,255,255,0)");
+  x.fillStyle = g; x.fillRect(0, 0, w, w);
+});
+const steam = Array.from({ length: small ? 5 : 9 }, (_, i) => {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: steamTex, transparent: true, depthWrite: false, opacity: 0, fog: false }));
+  s.userData = { ph: i / (small ? 5 : 9), x: rnd(-0.4, 0.4), z: rnd(-0.4, 0.4) };
+  return s;
+});
+
+const cup = new THREE.Group();
+cup.add(contact, bowl, tea, ...steam);
+cup.rotation.x = 0.95;                              // tip the opening toward the camera
+cup.visible = false;
+scene.add(cup);
+
+let halfH = 1, halfW = 1, cupR = 1.7;
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
+  halfW = halfH * camera.aspect;
+  cupR = Math.min(2.1, halfW * 0.7);
+  cup.scale.setScalar(cupR);
+}
+resize();
+addEventListener("resize", resize);
+
+const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
+addEventListener("pointermove", e => {
+  mouse.tx = (e.clientX / innerWidth) * 2 - 1;
+  mouse.ty = (e.clientY / innerHeight) * 2 - 1;
+});
+
+const dummy = new THREE.Object3D();
+const qFree = new THREE.Quaternion(), qPool = new THREE.Quaternion(), qLocal = new THREE.Quaternion();
+const e3 = new THREE.Euler(), vPool = new THREE.Vector3();
+const clock = new THREE.Clock();
+const smooth = x => x * x * (3 - 2 * x);
+const clamp01 = x => Math.min(1, Math.max(0, x));
+const wrap = (v, h) => ((((v + h) % (2 * h)) + 2 * h) % (2 * h)) - h;
+let scrollS = scrollY;
+
+function frame() {
+  const t = reduce ? 0 : clock.getElapsedTime();
+  scrollS += (scrollY - scrollS) * 0.08;
+  mouse.x += (mouse.tx - mouse.x) * 0.04;
+  mouse.y += (mouse.ty - mouse.y) * 0.04;
+
+  // Cup rises into frame over the first half of g, the tea steeps over the second.
+  const rise = smooth(clamp01(state.g / 0.45));
+  const steep = smooth(clamp01((state.g - 0.5) / 0.5));
+  cup.visible = rise > 0.001;
+  cup.position.set(0, 0.35 - (1 - rise) * (halfH + cupR * 1.6), 0);
+  cup.rotation.x = 0.95 - mouse.y * 0.06;
+  cup.rotation.y = mouse.x * 0.12 + t * 0.02;
+  cup.updateMatrixWorld();
+  teaMat.attenuationColor.copy(clearTea).lerp(steepedTea, steep);
+  teaMat.attenuationDistance = THREE.MathUtils.lerp(6, 0.75, steep);
+  rippleNormal.rotation = -t * 0.35;
+  steam.forEach(s => {
+    const k = (t * 0.12 + s.userData.ph) % 1;
+    s.position.set(s.userData.x + Math.sin(t * 0.6 + s.userData.ph * 9) * 0.1, LEVEL + 0.1 + k * 1.4, s.userData.z);
+    s.scale.setScalar(0.5 + k * 1.1);
+    s.material.opacity = Math.sin(k * Math.PI) * 0.07 * steep;
+  });
+
+  const spanX = halfW + 2.5, spanY = halfH + 2;
+  for (let i = 0; i < COUNT; i++) {
+    const d = data[i];
+    const near = (d.z + 9) / 11.5;                  // 0 far .. 1 near camera
+    // Free drift: slow fall, gust sway, and scroll lifts nearer leaves faster (parallax).
+    const fx = d.x * spanX + Math.sin(t * 0.5 + d.ph) * 0.5 + mouse.x * near * 0.7;
+    const fy = wrap(d.y * spanY - t * 0.16 * d.fall + scrollS * 0.0024 * (0.35 + near), spanY);
+    const fz = d.z;
+    const gi = smooth(clamp01((state.g - 0.3) * 2.2 - d.delay * 0.55));
+    qFree.setFromEuler(e3.set(d.rx + t * d.sx, d.ry + t * d.sy, d.rz + t * d.sz));
+    if (d.cupped) {
+      // Settle into the bowl: swirl around its axis, lie in the tea, submerged or floating.
+      const a = d.ph + t * (0.25 + (1 - d.r) * 0.55) + state.g * 2;
+      const rr = d.r * innerR * 0.82;
+      vPool.set(Math.cos(a) * rr, LEVEL + d.dy, Math.sin(a) * rr).applyMatrix4(cup.matrixWorld);
+      qLocal.setFromEuler(e3.set(-Math.PI / 2 + d.tilt * (d.dy > 0 ? 0.2 : 1), -a, 0, "YXZ"));
+      qPool.copy(cup.quaternion).multiply(qLocal);
+      dummy.position.set(fx + (vPool.x - fx) * gi, fy + (vPool.y - fy) * gi, fz + (vPool.z - fz) * gi);
+      dummy.quaternion.slerpQuaternions(qFree, qPool, gi);
+      dummy.scale.setScalar(d.s * (1 - gi * 0.5) * (small ? 0.85 : 1));
+      morpher.morphTargetInfluences[0] = smooth(clamp01(gi * 1.2 - 0.1)) * (0.55 + 0.45 * steep);
+      leaves.setMorphAt(i, morpher);
+      leaves.setColorAt(i, tmpColor.copy(d.color).lerp(wetLeaf, gi * (0.25 + 0.45 * steep)));
+    } else {
+      // The rest are blown out of frame so the bowl reads.
+      dummy.position.set(fx + fx * 1.4 * gi, fy + fy * 0.8 * gi, fz);
+      dummy.quaternion.copy(qFree);
+      dummy.scale.setScalar(d.s * (small ? 0.85 : 1));
+    }
+    dummy.updateMatrix();
+    leaves.setMatrixAt(i, dummy.matrix);
+  }
+  leaves.instanceMatrix.needsUpdate = true;
+  leaves.instanceColor.needsUpdate = true;
+  if (leaves.morphTexture) leaves.morphTexture.needsUpdate = true;
+
+  canvas.style.opacity = state.alpha * state.dim * (1 - state.light * 0.35);
+  scene.fog.color.copy(darkBg).lerp(lightBg, state.light);
+  camera.position.x = mouse.x * 0.35;
+  camera.position.y = -mouse.y * 0.25;
+  camera.lookAt(0, 0, 0);
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---------- GSAP ---------- */
+document.fonts.ready.then(() => {
+  // One orchestrated entrance: leaves surface, then the headline rises line by line.
+  if (reduce) {
+    state.alpha = 0.95;
+  } else {
+    const split = SplitText.create(".hero-title", { type: "lines,words", mask: "lines" });
+    gsap.timeline()
+      .to(state, { alpha: 0.95, duration: 2.6, ease: "power2.out" }, 0)
+      .from(split.words, { yPercent: 110, duration: 1.3, ease: "expo.out", stagger: 0.06 }, 0.3)
+      .from(".hero-sub, .top", { autoAlpha: 0, y: 14, duration: 1, stagger: 0.12, ease: "power2.out" }, 0.9);
+  }
+
+  // Steep: leaves gather and spiral into the cup, the words surface, then the leaves are released
+  // into the background before the phone arrives. One timeline so g has a single owner.
+  // Units ≈ viewport heights: steep "top 60%" → steep end is 2.6, then 0.85 more to "#feed top 15%".
+  gsap.timeline({ scrollTrigger: { trigger: "#steep", start: "top 60%", endTrigger: "#feed", end: "top 15%", scrub: 1.2 } })
+    .to(state, { g: 1, duration: 1.5, ease: "none" }, 0)
+    .to(".steep h2", { opacity: 1, duration: 0.4 }, 1.2)
+    .to(".steep p", { opacity: 1, duration: 0.4 }, 1.6)
+    .to(state, { g: 0, dim: 0.45, duration: 0.85, ease: "none" }, 2.6);
+
+  const steps = gsap.utils.toArray(".steps li");
+  gsap.timeline({
+    scrollTrigger: {
+      trigger: "#feed", start: "top top", end: "bottom bottom", scrub: 0.8,
+      onUpdate: self => {
+        const n = self.progress < 0.36 ? 0 : self.progress < 0.7 ? 1 : 2;
+        steps.forEach((li, i) => li.classList.toggle("on", i === n));
+      },
+    },
+  })
+    .to(".track", { yPercent: -33.3334, duration: 1, ease: "power2.inOut" }, 0.3)
+    .to(".track", { yPercent: -66.6667, duration: 1, ease: "power2.inOut" }, 1.6)
+    .to(".track", { yPercent: -33.3334, duration: 0.8, ease: "power2.inOut" }, 2.7)
+    .to(".sheet", { yPercent: -105, duration: 0.6, ease: "power3.out" }, 2.9)
+    .to({}, { duration: 0.4 });
+
+  // Stack: the page turns porcelain and pieces land one on another.
+  gsap.timeline({ scrollTrigger: { trigger: "#stack", start: "top 85%", end: "top 15%", scrub: 1 } })
+    .to(document.documentElement, { "--bg": "#EEF0E8", "--ink": "#16301F", "--ink-soft": "rgba(22,48,31,0.7)", duration: 1, ease: "none" }, 0)
+    .to(state, { light: 1, duration: 1, ease: "none" }, 0);
+
+  const pieces = gsap.utils.toArray(".piece");
+  const tilt = [-4, 3, -2, 5, -1];
+  const pile = gsap.timeline({ scrollTrigger: { trigger: "#stack", start: "top top", end: "bottom bottom", scrub: 1 } });
+  pieces.forEach((el, i) => {
+    pile.fromTo(el,
+      { y: () => innerHeight * 1.1, rotation: tilt[i] * 4, x: (i % 2 ? 1 : -1) * 60 },
+      { y: -i * 10, rotation: tilt[i], x: (i % 2 ? 1 : -1) * 4, duration: 1, ease: "power3.out" },
+      i * 0.55);
+  });
+  pile.to({}, { duration: 0.6 });
+
+  ScrollTrigger.refresh();
+});
+</script>
+</body>
+</html>
